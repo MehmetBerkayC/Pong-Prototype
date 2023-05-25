@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Game : MonoBehaviour
 {
@@ -13,16 +14,34 @@ public class Game : MonoBehaviour
 
     [SerializeField, Min(2)] int pointsToWin = 3;
 
+    [SerializeField] TextMeshProUGUI countdownText;
+    [SerializeField, Min(1f)] float newGameDelay = 3f;
+
+    float countdownUntilNewGame;
+
     private void Awake()
     {
-        StartNewGame();
+        countdownUntilNewGame = newGameDelay;
     }
+
     private void Update()
     {
         // Pads
         bottomPad.Move(ball.Position.x, arenaExtents.x);
         topPad.Move(ball.Position.x, arenaExtents.x);
 
+        if(countdownUntilNewGame <= 0f)
+        {
+            UpdateGame();
+        }
+        else 
+        {
+            UpdateCountdown();
+        }
+    }
+
+    private void UpdateGame()
+    {
         // Ball
         ball.Move();
         BounceYIfNeeded();
@@ -30,12 +49,38 @@ public class Game : MonoBehaviour
         ball.UpdateVisualization();
     }
 
+    private void UpdateCountdown()
+    {
+        countdownUntilNewGame -= Time.deltaTime;
+        
+        if(countdownUntilNewGame <= 0f)
+        {
+            countdownText.gameObject.SetActive(false);
+            StartNewGame();
+        }
+        else
+        {
+            float displayValue = Mathf.Ceil(countdownUntilNewGame);
+            if(displayValue < newGameDelay)
+            {
+                countdownText.SetText("{0}", displayValue);
+            }
+        }
+    }
 
     private void StartNewGame()
     {
         ball.StartNewGame();
         bottomPad.StartNewGame();
         topPad.StartNewGame();
+    }
+
+    void EndGame()
+    {
+        countdownUntilNewGame = newGameDelay;
+        countdownText.SetText("Game Over");
+        countdownText.gameObject.SetActive(true);
+        ball.EndGame();
     }
 
     void BounceYIfNeeded()
@@ -70,7 +115,7 @@ public class Game : MonoBehaviour
         }
         else if (attacker.ScorePoint(pointsToWin))
         {
-            StartNewGame();
+            EndGame();
         }
     }
 

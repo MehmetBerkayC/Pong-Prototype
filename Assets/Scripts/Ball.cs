@@ -7,7 +7,7 @@ public class Ball : MonoBehaviour
     [SerializeField, Min(0f)]
     float
         maxXSpeed = 20f,
-        startXSpeed = 4f,
+        maxStartXSpeed = 2f,
         constantYSpeed = 5f,
         ballExtents = 0.5f; // Ball's edge
 
@@ -18,13 +18,26 @@ public class Ball : MonoBehaviour
     public void Move() => position += velocity * Time.deltaTime;
     public float Extents => ballExtents;
     public Vector2 Position => position;
-
     public Vector2 Velocity => velocity;
+
+    private void Awake()
+    {
+        gameObject.SetActive(false);
+    }
+
     public void StartNewGame()
     {
         position = Vector3.zero;
         UpdateVisualization();
-        velocity = new Vector2(startXSpeed, -constantYSpeed);
+        velocity.x = Random.Range(-maxStartXSpeed, maxStartXSpeed);
+        velocity.y = -constantYSpeed;
+        gameObject.SetActive(true);
+    }
+
+    public void EndGame()
+    {
+        position.x = 0f;
+        gameObject.SetActive(false);
     }
 
     public void SetXPositionAndSpeed(float start, float speedFactor, float deltaTime)

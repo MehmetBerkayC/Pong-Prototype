@@ -8,21 +8,37 @@ public class Pad : MonoBehaviour
 
     [SerializeField, Min(0f)]
     float
-        extents = 4f,
-        speed = 10f;
+        minExtents = 4f,
+        maxExtents = 4f,
+        speed = 10f,
+        maxTargetingBias = 0.75f;
 
-    [SerializeField] TextMeshPro scoreText;
+    [SerializeField] TextMeshProUGUI scoreText;
+    
     int score;
+    float extents, targetingBias;
 
-    public void StartNewGame()
+    private void Awake()
     {
         SetScore(0);
     }
 
+    public void StartNewGame()
+    {
+        SetScore(0);
+        ChangeTargetingBias();
+    }
+
     public bool ScorePoint(int pointsToWin)
     {
-        SetScore(score + 1);
+        SetScore(score + 1, pointsToWin);
         return score >= pointsToWin;
+    }
+    void SetScore(int newScore, float pointsToWin = 1000f)
+    {
+        score = newScore;
+        scoreText.SetText("{0}", newScore);
+        SetExtents(Mathf.Lerp(maxExtents, minExtents, newScore / (pointsToWin - 1f)));
     }
 
     public void Move(float target, float arenaExtents)
@@ -39,6 +55,7 @@ public class Pad : MonoBehaviour
 
     public bool HitBall(float ballX, float ballExtents, out float hitFactor)
     {
+        ChangeTargetingBias();
         hitFactor = (ballX - transform.localPosition.x) / (extents + ballExtents);
         return -1f <= hitFactor && hitFactor <= 1f;
     }
@@ -61,6 +78,9 @@ public class Pad : MonoBehaviour
 
     float AdjustByAI(float x, float target)
     {
+        // Make AI differ where it hits the ball
+        target += targetingBias * extents;
+
         if(x < target)
         {
             return Mathf.Min(x + speed * Time.deltaTime, target);
@@ -68,9 +88,17 @@ public class Pad : MonoBehaviour
         return Mathf.Max(x - speed * Time.deltaTime, target);
     }
 
-    void SetScore(int newScore)
+    void ChangeTargetingBias()
     {
-        score = newScore;
-        scoreText.SetText("{0}", newScore);
+        targetingBias = Random.Range(-maxTargetingBias, maxTargetingBias);
     }
+
+    void SetExtents(float newExtents)
+    {
+        extents = newExtents;
+        Vector3 scale = transform.localScale;
+        scale.x = 2f * newExtents;
+        transform.localScale = scale;
+    }
+   
 }
