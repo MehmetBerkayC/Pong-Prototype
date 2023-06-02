@@ -6,15 +6,16 @@ using TMPro;
 
 public class Game : MonoBehaviour
 {
+    [SerializeField] LivelyCamera livelyCamera;
+    
     [SerializeField] Ball ball;
-
     [SerializeField] Pad bottomPad, topPad;
 
     [SerializeField, Min(0f)] Vector2 arenaExtents = new Vector2(10f, 10f);
 
     [SerializeField, Min(2)] int pointsToWin = 3;
 
-    [SerializeField] TextMeshProUGUI countdownText;
+    [SerializeField] TextMeshPro countdownText;
     [SerializeField, Min(1f)] float newGameDelay = 3f;
 
     float countdownUntilNewGame;
@@ -106,16 +107,20 @@ public class Game : MonoBehaviour
         BounceXIfNeeded(bounceX);
         // After bounce
         bounceX = ball.Position.x - ball.Velocity.x * durationAfterBounce;
-
+        livelyCamera.PushXZ(ball.Velocity);
         ball.BounceY(boundary);
 
-        if(defender.HitBall(bounceX, ball.Extents, out float hitFactor))
+        if (defender.HitBall(bounceX, ball.Extents, out float hitFactor))
         {
             ball.SetXPositionAndSpeed(bounceX, hitFactor, durationAfterBounce);
         }
-        else if (attacker.ScorePoint(pointsToWin))
+        else
         {
-            EndGame();
+            livelyCamera.JostleY();
+            if (attacker.ScorePoint(pointsToWin))
+            {
+                EndGame();
+            }
         }
     }
 
@@ -124,10 +129,12 @@ public class Game : MonoBehaviour
         float xExtents = arenaExtents.x - ball.Extents;
         if(xPosition < -xExtents)
         {
+            livelyCamera.PushXZ(ball.Velocity);
             ball.BounceX(-xExtents);
         }
         else if (xPosition > xExtents)
         {
+            livelyCamera.PushXZ(ball.Velocity);
             ball.BounceX(xExtents);
         }
     }

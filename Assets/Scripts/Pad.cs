@@ -13,13 +13,30 @@ public class Pad : MonoBehaviour
         speed = 10f,
         maxTargetingBias = 0.75f;
 
-    [SerializeField] TextMeshProUGUI scoreText;
-    
+    [SerializeField] TextMeshPro scoreText;
+    [SerializeField] MeshRenderer goalRenderer;
+
+    [SerializeField, ColorUsage(true, true)]
+    Color goalColor = Color.white;
+
+    Material padMaterial, goalMaterial, scoreMaterial;
+
+    static readonly int
+        emissionColorID = Shader.PropertyToID("_EmissionColor"),
+        faceColorID = Shader.PropertyToID("_FaceColor"),
+        timeOfLastHitID = Shader.PropertyToID("_TimeOfLastHit");
+
+
     int score;
     float extents, targetingBias;
 
+
     private void Awake()
     {
+        goalMaterial = goalRenderer.material;
+        goalMaterial.SetColor(emissionColorID, goalColor);
+        padMaterial = GetComponent<MeshRenderer>().material;
+        scoreMaterial = scoreText.fontMaterial;
         SetScore(0);
     }
 
@@ -31,6 +48,7 @@ public class Pad : MonoBehaviour
 
     public bool ScorePoint(int pointsToWin)
     {
+        goalMaterial.SetFloat(timeOfLastHitID, Time.time);
         SetScore(score + 1, pointsToWin);
         return score >= pointsToWin;
     }
@@ -38,6 +56,7 @@ public class Pad : MonoBehaviour
     {
         score = newScore;
         scoreText.SetText("{0}", newScore);
+        scoreMaterial.SetColor(faceColorID, goalColor * (newScore / pointsToWin));
         SetExtents(Mathf.Lerp(maxExtents, minExtents, newScore / (pointsToWin - 1f)));
     }
 
@@ -57,7 +76,13 @@ public class Pad : MonoBehaviour
     {
         ChangeTargetingBias();
         hitFactor = (ballX - transform.localPosition.x) / (extents + ballExtents);
-        return -1f <= hitFactor && hitFactor <= 1f;
+        bool success = -1f <= hitFactor && hitFactor <= 1f;
+
+        if (success)
+        {
+            padMaterial.SetFloat(timeOfLastHitID, Time.time);
+        }
+        return success;
     }
 
     float AdjustByPlayer(float x)
